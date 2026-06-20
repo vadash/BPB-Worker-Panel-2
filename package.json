@@ -23,7 +23,7 @@
 		"glob": "^13.0.6",
 		"globals": "^17.6.0",
 		"html-minifier": "^4.0.0",
-		"javascript-obfuscator": "latest",
+		"js-confuser": "latest",
 		"jose": "^6.2.3",
 		"jszip": "^3.10.1",
 		"terser": "^5.48.0"
