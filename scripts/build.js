@@ -223,36 +223,48 @@ async function customObfuscate(sourceCode) {
         identifierGenerator: "mangled",
 
         // Custom string encoding with per-build random keys
-        customStringEncodings: [
-            {
-                code: `
-                    function {fnName}(str) {
-                        return str.split('')
-                            .map(char => {
+        // Pre-compute a 128-char lookup table at build time so runtime
+        // decoding is a single table[index] lookup per character instead
+        // of per-char arithmetic + split/map/join overhead.
+        customStringEncodings: (() => {
+            const decodeTableChars = [];
+            for (let i = 0; i < BASE_KEY; i++) {
+                const code = (i ^ XOR_KEY);
+                const decoded = ((code + SHIFT_KEY) % BASE_KEY);
+                decodeTableChars.push(String.fromCharCode(decoded));
+            }
+            const decodeTableStr = decodeTableChars.join('');
+
+            return [
+                {
+                    code: `
+                        function {fnName}(str) {
+                            var t = ${JSON.stringify(decodeTableStr)};
+                            var r = "";
+                            for (var i = 0; i < str.length; i++)
+                                r += t[str.charCodeAt(i)];
+                            return r;
+                        }`,
+                    encode: (str) => {
+                        return str
+                            .split('')
+                            .map((char) => {
                                 var code = char.charCodeAt(0);
-                                code = (code - ${SHIFT_KEY} + ${BASE_KEY}) % ${BASE_KEY};
-                                code = code ^ ${XOR_KEY};
+                                code = code ^ XOR_KEY;
+                                code = (code + SHIFT_KEY) % BASE_KEY;
                                 return String.fromCharCode(code);
                             })
                             .join('');
-                    }`,
-                encode: (str) => {
-                    return str
-                        .split('')
-                        .map((char) => {
-                            var code = char.charCodeAt(0);
-                            code = code ^ XOR_KEY;
-                            code = (code + SHIFT_KEY) % BASE_KEY;
-                            return String.fromCharCode(code);
-                        })
-                        .join('');
+                    },
                 },
-            },
-        ],
+            ];
+        })(),
 
-        // FAST optimizations
-        movedDeclarations: true,
-        objectExtraction: true,
+        // FAST optimizations (movedDeclarations & objectExtraction disabled -
+        // they add runtime thunk/getter call overhead per variable/property
+        // access with minimal anti-signal benefit; renaming covers it)
+        movedDeclarations: false,
+        objectExtraction: false,
         compact: true,
         hexadecimalNumbers: true,
         astScrambler: true,
