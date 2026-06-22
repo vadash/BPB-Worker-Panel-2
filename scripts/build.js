@@ -229,8 +229,8 @@ async function customObfuscate(sourceCode) {
         customStringEncodings: (() => {
             const decodeTableChars = [];
             for (let i = 0; i < BASE_KEY; i++) {
-                const code = (i ^ XOR_KEY);
-                const decoded = ((code + SHIFT_KEY) % BASE_KEY);
+                const code = ((i - SHIFT_KEY + BASE_KEY) % BASE_KEY);
+                const decoded = code ^ XOR_KEY;
                 decodeTableChars.push(String.fromCharCode(decoded));
             }
             const decodeTableStr = decodeTableChars.join('');
