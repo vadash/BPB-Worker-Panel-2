@@ -89,7 +89,7 @@ export async function getClNormalConfig(): Promise<Response> {
     const proxyTags: string[] = [];
     const chainTags: string[] = [];
     const outbounds: Outbound[] = [];
-    const selectorTags = ["💦 Best Ping 🚀"].concatIf(isChain, "💦 🔗 Best Ping 🚀");
+    const selectorTags = isChain ? ["💦 🔗 Best Ping 🚀"] : ["💦 Best Ping 🚀"];
 
     for (const protocol of protocols) {
         let protocolIndex = 1;
@@ -102,7 +102,6 @@ export async function getClNormalConfig(): Promise<Response> {
 
                 if (outbound) {
                     proxyTags.push(tag);
-                    selectorTags.push(tag);
                     outbounds.push(outbound);
 
                     if (isChain) {
@@ -114,6 +113,8 @@ export async function getClNormalConfig(): Promise<Response> {
 
                         chainTags.push(chainTag);
                         selectorTags.push(chainTag);
+                    } else {
+                        selectorTags.push(tag);
                     }
 
                     protocolIndex++;

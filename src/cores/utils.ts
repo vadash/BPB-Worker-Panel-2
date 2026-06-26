@@ -53,13 +53,14 @@ export async function getConfigAddresses(isFragment: boolean): Promise<string[]>
         settings: { enableIPv6, customCdnAddrs, cleanIPs }
     } = globalThis;
 
+    if (cleanIPs.length) return cleanIPs;
+
     const { ipv4, ipv6 } = await resolveDNS(hostName, !enableIPv6);
     const addrs = [
         hostName,
         'www.speedtest.net',
         ...ipv4,
-        ...ipv6.map((ip: string) => `[${ip}]`),
-        ...cleanIPs
+        ...ipv6.map((ip: string) => `[${ip}]`)
     ];
 
     return addrs.concatIf(!isFragment, customCdnAddrs);

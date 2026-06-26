@@ -279,10 +279,6 @@ export async function getXrCustomConfigs(isFragment: boolean): Promise<Response>
                 const proxy = modifyOutbound(outbound, `proxy-${index}`);
                 proxies.push(proxy);
 
-                const remark = generateRemark(protocolIndex, port, host, protocol, isFragment, false);
-                const config = await buildConfig(remark, [outbound], false, false, false, false, false, [host]);
-                configs.push(config);
-
                 if (chainProxy) {
                     const remark = generateRemark(protocolIndex, port, host, protocol, isFragment, true);
                     const chainConfig = await buildConfig(remark, [chainProxy, outbound], false, true, false, false, false, [host]);
@@ -290,6 +286,10 @@ export async function getXrCustomConfigs(isFragment: boolean): Promise<Response>
 
                     const chain = modifyOutbound(chainProxy, `chain-${index}`, `proxy-${index}`);
                     chains.push(chain);
+                } else {
+                    const remark = generateRemark(protocolIndex, port, host, protocol, isFragment, false);
+                    const config = await buildConfig(remark, [outbound], false, false, false, false, false, [host]);
+                    configs.push(config);
                 }
 
                 protocolIndex++;
@@ -298,7 +298,7 @@ export async function getXrCustomConfigs(isFragment: boolean): Promise<Response>
         }
     }
 
-    await addBestPingConfigs(configs, hosts, proxies, chains, isFragment);
+    if (!chainProxy) await addBestPingConfigs(configs, hosts, proxies, chains, isFragment);
 
     if (isFragment) {
         await addBestFragmentConfigs(configs, chainProxy);

@@ -93,7 +93,7 @@ export async function getSbCustomConfig(isFragment: boolean): Promise<Response> 
     const chainTags: string[] = [];
     const outbounds: Outbound[] = [];
 
-    const selectorTags = ["💦 Best Ping 🚀"].concatIf(isChain, "💦 🔗 Best Ping 🚀");
+    const selectorTags = isChain ? ["💦 🔗 Best Ping 🚀"] : ["💦 Best Ping 🚀"];
 
     for (const protocol of protocols) {
         let protocolIndex = 1;
@@ -106,7 +106,6 @@ export async function getSbCustomConfig(isFragment: boolean): Promise<Response> 
 
                 outbounds.push(outbound);
                 proxyTags.push(tag);
-                selectorTags.push(tag);
 
                 if (isChain) {
                     const chainTag = generateRemark(protocolIndex, port, host, protocol, isFragment, true);
@@ -117,6 +116,8 @@ export async function getSbCustomConfig(isFragment: boolean): Promise<Response> 
 
                     chainTags.push(chainTag);
                     selectorTags.push(chainTag);
+                } else {
+                    selectorTags.push(tag);
                 }
 
                 protocolIndex++;
