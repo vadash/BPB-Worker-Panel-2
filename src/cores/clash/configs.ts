@@ -66,22 +66,22 @@ async function buildConfig(
     };
 
     const name = isWarp ? `💦 Warp ${isPro ? "Pro " : ""}- Best Ping 🚀` : "💦 Best Ping 🚀";
-    const mainUrlTest = buildUrlTest(name, proxyTags, isWarp);
-    config["proxy-groups"].push(mainUrlTest);
+    if (proxyTags.length) config["proxy-groups"].push(buildUrlTest(name, proxyTags, isWarp));
     if (isWarp) config["proxy-groups"].push(buildUrlTest(`💦 WoW ${isPro ? "Pro " : ""}- Best Ping 🚀`, chainTags, isWarp));
-    if (isChain) config["proxy-groups"].push(buildUrlTest("💦 🔗 Best Ping 🚀", chainTags, isWarp));
+    if (isChain && chainTags.length) config["proxy-groups"].push(buildUrlTest("💦 🔗 Best Ping 🚀", chainTags, isWarp));
 
     return config;
 }
 
 export async function getClNormalConfig(): Promise<Response> {
-    const { outProxy, ports, upstreamParams: { upstreamServer, upstreamPort } } = globalThis.settings;
+    const { outProxy, ports, cleanIPs, upstreamParams: { upstreamServer, upstreamPort } } = globalThis.settings;
     const chainProxy = outProxy ? buildChainOutbound() : undefined;
     const isChain = !!chainProxy;
+    const hasCleanIPs = !!cleanIPs.length;
     const hosts = await getConfigAddresses(false);
     const protocols = getProtocols();
 
-    if (upstreamServer && upstreamPort) {
+    if (!hasCleanIPs && upstreamServer && upstreamPort) {
         ports.unshift(upstreamPort);
         hosts.unshift(upstreamServer);
     }
@@ -89,7 +89,9 @@ export async function getClNormalConfig(): Promise<Response> {
     const proxyTags: string[] = [];
     const chainTags: string[] = [];
     const outbounds: Outbound[] = [];
-    const selectorTags = isChain ? ["💦 🔗 Best Ping 🚀"] : ["💦 Best Ping 🚀"];
+    const selectorTags = hasCleanIPs
+        ? []
+        : isChain ? ["💦 🔗 Best Ping 🚀"] : ["💦 Best Ping 🚀"];
 
     for (const protocol of protocols) {
         let protocolIndex = 1;
@@ -126,8 +128,8 @@ export async function getClNormalConfig(): Promise<Response> {
     const config = await buildConfig(
         outbounds,
         selectorTags,
-        proxyTags,
-        chainTags,
+        hasCleanIPs ? [] : proxyTags,
+        hasCleanIPs ? [] : chainTags,
         isChain,
         false,
         false

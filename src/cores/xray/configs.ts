@@ -253,13 +253,14 @@ async function addWorkerlessConfigs(configs: Config[]) {
 }
 
 export async function getXrCustomConfigs(isFragment: boolean): Promise<Response> {
-    const { outProxy, ports, upstreamParams: { upstreamServer, upstreamPort } } = globalThis.settings;
+    const { outProxy, ports, cleanIPs, upstreamParams: { upstreamServer, upstreamPort } } = globalThis.settings;
     const chainProxy = outProxy ? buildChainOutbound() : undefined;
+    const hasCleanIPs = !!cleanIPs.length;
     const hosts = await getConfigAddresses(isFragment);
     const totalPorts = ports.filter(port => !isFragment || isHttps(port));
     const protocols = getProtocols();
 
-    if (upstreamServer && upstreamPort && !isFragment) {
+    if (!hasCleanIPs && upstreamServer && upstreamPort && !isFragment) {
         totalPorts.unshift(upstreamPort);
         hosts.unshift(upstreamServer);
     }
@@ -298,9 +299,9 @@ export async function getXrCustomConfigs(isFragment: boolean): Promise<Response>
         }
     }
 
-    if (!chainProxy) await addBestPingConfigs(configs, hosts, proxies, chains, isFragment);
+    if (!chainProxy && !hasCleanIPs) await addBestPingConfigs(configs, hosts, proxies, chains, isFragment);
 
-    if (isFragment) {
+    if (isFragment && !hasCleanIPs) {
         await addBestFragmentConfigs(configs, chainProxy);
         await addWorkerlessConfigs(configs);
     }

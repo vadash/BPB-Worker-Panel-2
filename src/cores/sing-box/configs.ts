@@ -68,23 +68,23 @@ async function buildConfig(
     };
 
     const tag = isWarp ? `💦 Warp - Best Ping 🚀` : "💦 Best Ping 🚀";
-    const mainUrlTest = buildUrlTest(tag, urlTestTags, isWarp);
-    config.outbounds.push(mainUrlTest);
+    if (urlTestTags.length) config.outbounds.push(buildUrlTest(tag, urlTestTags, isWarp));
     if (isWarp) config.outbounds.push(buildUrlTest("💦 WoW - Best Ping 🚀", secondUrlTestTags, isWarp));
-    if (isChain) config.outbounds.push(buildUrlTest("💦 🔗 Best Ping 🚀", secondUrlTestTags, isWarp));
+    if (isChain && secondUrlTestTags.length) config.outbounds.push(buildUrlTest("💦 🔗 Best Ping 🚀", secondUrlTestTags, isWarp));
 
     return config;
 }
 
 export async function getSbCustomConfig(isFragment: boolean): Promise<Response> {
-    const { outProxy, ports, upstreamParams: { upstreamServer, upstreamPort } } = globalThis.settings;
+    const { outProxy, ports, cleanIPs, upstreamParams: { upstreamServer, upstreamPort } } = globalThis.settings;
     const chainProxy = outProxy ? buildChainOutbound() : undefined;
     const isChain = !!chainProxy;
+    const hasCleanIPs = !!cleanIPs.length;
     const protocols = getProtocols();
     const hosts = await getConfigAddresses(isFragment);
     const totalPorts = ports.filter(port => !isFragment || isHttps(port));
 
-    if (upstreamServer && upstreamPort && !isFragment) {
+    if (!hasCleanIPs && upstreamServer && upstreamPort && !isFragment) {
         totalPorts.unshift(upstreamPort);
         hosts.unshift(upstreamServer);
     }
@@ -93,7 +93,9 @@ export async function getSbCustomConfig(isFragment: boolean): Promise<Response> 
     const chainTags: string[] = [];
     const outbounds: Outbound[] = [];
 
-    const selectorTags = isChain ? ["💦 🔗 Best Ping 🚀"] : ["💦 Best Ping 🚀"];
+    const selectorTags = hasCleanIPs
+        ? []
+        : isChain ? ["💦 🔗 Best Ping 🚀"] : ["💦 Best Ping 🚀"];
 
     for (const protocol of protocols) {
         let protocolIndex = 1;
@@ -129,8 +131,8 @@ export async function getSbCustomConfig(isFragment: boolean): Promise<Response> 
         outbounds,
         [],
         selectorTags,
-        proxyTags,
-        chainTags,
+        hasCleanIPs ? [] : proxyTags,
+        hasCleanIPs ? [] : chainTags,
         false,
         isChain
     );
